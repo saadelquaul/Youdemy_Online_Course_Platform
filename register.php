@@ -1,3 +1,38 @@
+<?php
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['firstname'])) {
+    $firstname = htmlspecialchars(trim($_POST['firstname']));
+    $lastname = htmlspecialchars(trim($_POST['lastname']));
+    $email = htmlspecialchars(trim($_POST['email']));
+    $password = htmlspecialchars(trim($_POST['password']));
+    $confirmPassword = htmlspecialchars(trim($_POST['confirm-password']));
+    $role = htmlspecialchars(trim($_POST['role']));
+    $specialty = isset($_POST['specialty']) ? htmlspecialchars(trim($_POST['specialty'])) : null;
+    $description = isset($_POST['description']) ? htmlspecialchars(trim($_POST['description'])) : null;
+
+    if (empty($firstname) || empty($lastname) || empty($email) || empty($password) || empty($confirmPassword) || empty($role)) {
+        echo "<script>formMessage(event,'All fields are required.');</script>";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        echo "<script>formMessage(event,'Invalid email format.');</script>";
+    } elseif ($password !== $confirmPassword) {
+        echo "<script>formMessage(event'Passwords do not match.');</script>";
+    }
+    var_dump($role) ;
+    if($role === "Sign up as a"){
+        echo "<script>formMessage(event,'Select a role (Studnet or Teacher).');</script>";
+        exit;
+
+    }
+}
+
+
+
+
+
+
+
+
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -12,7 +47,7 @@
 
     <!-- Google Web Fonts -->
     <link rel="preconnect" href="https://fonts.gstatic.com">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"> 
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
@@ -22,12 +57,14 @@
 
     <!-- Customized Bootstrap Stylesheet -->
     <link href="css/style.css" rel="stylesheet">
+    <link href="css/login&signup.css" rel="stylesheet">
+    <link href="css/style.min.css" rel="stylesheet">
 </head>
 
 <body>
-    
- <!-- Topbar Start -->
- <div class="container-fluid d-none d-lg-block">
+
+    <!-- Topbar Start -->
+    <div class="container-fluid d-none d-lg-block">
         <div class="row align-items-center py-4 px-xl-5">
             <div class="col-lg-3">
                 <a href="index.php" class="text-decoration-none">
@@ -64,58 +101,51 @@
         </div>
     </div>
     <!-- Topbar End -->
-      <div class="container-fluid bg-registration py-5" style="margin: 90px 0;">
+
+    <div id="overlay"></div>
+    <div id="alertBox">
+        <p id="alertMessage">Invalid credentials!</p>
+        <button onclick="closeAlert()">Close</button>
+    </div>
+
+
+
+    <div class="container-fluid bg-registration py-5" style="margin: 90px 0;">
         <div class="container py-5">
             <div class="row align-items-center">
-                
+
                 <div class="col-lg-5">
                     <div class="card border-0">
                         <div class="card-header bg-light text-center p-4">
                             <h1 class="m-0">Sign Up Now</h1>
                         </div>
                         <div class="card-body rounded-bottom bg-primary p-5">
-                            <form method='post' action='register.php'>
+                            <form method='post' action='register.php' onsubmit="validateForm(0,event)">
                                 <div class="form-group">
-                                    <input type="text" class="form-control border-0 p-4" placeholder="First name" name="firstname" required="required" />
+                                    <input type="text" class="form-control border-0 p-4" placeholder="First name" name="firstname" id='firstName'  />
                                 </div>
                                 <div class="form-group">
-                                    <input type="text" class="form-control border-0 p-4" placeholder="Last name" name="lastname" required="required" />
+                                    <input type="text" class="form-control border-0 p-4" placeholder="Last name" name="lastname" id='lastName'  />
                                 </div>
                                 <div class="form-group">
-                                    <input type="email" class="form-control border-0 p-4" placeholder="Your email" required="required" />
+                                    <input type="email" id='s-email' name="email" class="form-control border-0 p-4" placeholder="Your email"  />
                                 </div>
                                 <div class="form-group">
-                                    <input type="password" class="form-control border-0 p-4" placeholder="Your Password" name='password' required="required" />
+                                    <input type="password" id='s-password' class="form-control border-0 p-4" placeholder="Your Password" name='password' />
                                 </div>
                                 <div class="form-group">
-                                    <input type="password" class="form-control border-0 p-4" placeholder="Confirm Your Passowrd" name='confirm-password' required="required" />
+                                    <input type="password" id='s-c-password' class="form-control border-0 p-4" placeholder="Confirm Your Passowrd" name='confirm-password'  />
                                 </div>
                                 <div class="form-group">
-                                    <select class="custom-select border-0 px-4 role" style="height: 47px;">
+                                    <select class="custom-select border-0 px-4 role" name='role' style="height: 47px;">
                                         <option selected>Sign up as a</option>
                                         <option value="1">Student</option>
                                         <option value="2">Teacher</option>
                                     </select>
                                 </div>
-                                <div class="teacher d-none">
-                                <div class="form-group">
-                                    <select class="custom-select border-0 px-4" style="height: 47px;">
-                                        <option selected>Your Specialty</option>
-                                        <option value="1">Programming</option>
-                                        <option value="2">Data Science</option>
-                                        <option value="3">Digital Marketing</option>
-                                        <option value="4">Graphic Design</option>
-                                        <option value="5">Music Production</option>
-                                        <option value="6">Fitness & Nutrition</option>
-                                        <option value="7">Photography</option>
-                                        <option value="8">Business Management</option>
-                                        <option value="9">Language Learning</option>
-                                    </select>
+                                <div class="teacher">
+                                    
                                 </div>
-                                <div class="form-group">
-                                    <textarea class="form-control border-0 p-4" placeholder="Leave a brief description about your self" name='confirm-password' required="required"></textarea>
-                                </div>
-</div>
                                 <div>
                                     <button class="btn btn-dark btn-block border-0 py-3" type="submit">Sign Up Now</button>
                                 </div>
@@ -128,4 +158,5 @@
         </div>
     </div>
     <!-- Registration End -->
-<?php include 'includes/footer.php' ?>
+    <?php include 'includes/footer.php' ?>
+    <script src="js/login&signup.js"></script>

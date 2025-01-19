@@ -1,3 +1,66 @@
+<?php
+
+require_once 'Classes/Admin.php';
+require_once 'Classes/Teacher.php';
+require_once 'Classes/Student.php';
+require_once 'includes/db.php';
+
+$error;
+if($_SERVER['REQUEST_METHOD'] === 'POST' and isset($_POST['email']))
+{   
+    $email = $_POST['email'];
+    $password = $_POST['password'];
+    
+    $user = User::getUserByEmail($email,$db);
+    
+    if(isset($user['Email'])){
+        if(password_verify($password,$user['password'])){
+            session_start();
+            if($user['role'] === 'student'){
+                $student = new Studnet($user['firstName'],$user['lastName'],$user['Email'],$user['password'],$user['role'],$db);
+                $_SESSION['user'] = serialize($student);
+                header('Loction: student-dashboard.php');
+                exit;
+
+            }elseif($user['role'] === 'teacher')
+            {
+                $teacher = new Teacher($user['firstName'],$user['lastName'],$user['Email'],$user['password'],$user['role'],$db);
+                $_SESSION['user'] = serialize($teacher);
+                header('Loction: teacher-dashboard');
+                exit;
+                
+            }elseif($user['role'] === 'Admin'){
+                $admin = new Admin($user['firstName'],$user['lastName'],$user['Email'],$user['password'],$user['role'],$db);
+                $_SESSION['user'] = serialize($student);
+                header('Loction: admin-dashboard.php');
+                exit;
+
+            }
+
+
+        }else{
+            echo "<script>validateForm(1,event,0)</script>";
+
+        }
+    }
+    else{
+        echo "<script>validateForm(1,event,0)</script>";
+    }
+
+}
+
+
+
+
+
+
+
+
+
+?>
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -22,6 +85,15 @@
 
     <!-- Customized Bootstrap Stylesheet -->
     <link href="css/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/login&signup.css">
+    <script>
+
+
+
+
+
+    </script>
+
 </head>
 
 <body>
@@ -64,6 +136,11 @@
         </div>
     </div>
     <!-- Topbar End -->
+    <div id="overlay"></div>
+    <div id="alertBox">
+        <p id="alertMessage">Invalid credentials!</p>
+        <button onclick="closeAlert()">Close</button>
+    </div>
 
     <div class="container-fluid bg-registration py-5  " style="margin: 90px 0;">
         <div class="container py-5">
@@ -72,15 +149,15 @@
                 <div class="col-lg-5">
                     <div class="card border-0">
                         <div class="card-header bg-light text-center p-4">
-                            <h1 class="m-0">Sign Up Now</h1>
+                            <h1 class="m-0">Login</h1>
                         </div>
                         <div class="card-body rounded-bottom bg-primary p-5">
-                            <form method='post' action='login.php'>
+                            <form method='post' action='login.php' onsubmit="validateForm(1,event)" >
                                 <div class="form-group">
-                                    <input type="email" class="form-control border-0 p-4" placeholder="Your email" required="required" />
+                                    <input type="email" class="form-control border-0 p-4" id="email" name="email" placeholder="Your email" required />
                                 </div>
                                 <div class="form-group">
-                                    <input type="password" class="form-control border-0 p-4" placeholder="Your Password" name='password' required="required" />
+                                    <input type="password" class="form-control border-0 p-4" id="password" placeholder="Your Password" name='password' required/>
                                 </div>
                                 <div>
                                     <button class="btn btn-dark btn-block border-0 py-3" type="submit">Login</button>
@@ -94,3 +171,4 @@
         </div>
     </div>
     <?php include 'includes/footer.php' ?>
+    <script src="js/login&signup.js"></script>

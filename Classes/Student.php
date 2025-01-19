@@ -3,7 +3,7 @@ require_once 'User.php';
 class Studnet extends User {
 
     public function __construct($firstname,$lastname,$email,$password,$role,$db){
-        parent::__construct($firstname,$lastname,$email,$password,$role,$db,true);
+        parent::__construct($firstname,$lastname,$email,$password,$role,$db);
 
     }
 
@@ -26,10 +26,19 @@ class Studnet extends User {
 
     }
 
-    
+    public function create(){
+        $hashedPassword = password_hash($this->Password,PASSWORD_BCRYPT);
+        $stmt = $this->DB->prepare("INSERT INTO users (firstname, lastname, Email, password, role) values (:FirstName, :LastName, :Email, :Role)");
+        $stmt->excute([
+            'FirstName' => $this->FirstName,
+            'LastName' => $this->LastName,
+            'Email' => $this->Email,
+            'Role' => $this->Role
+        ]);
 
     
 
+}
 }
 
 

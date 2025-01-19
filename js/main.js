@@ -1,3 +1,41 @@
+
+const techinfo = document.querySelector('.teacher');
+const role = document.querySelector('.role');
+
+
+role.addEventListener('change',()=> {
+
+    if(role.value == 2){
+        techinfo.innerHTML = `<div class="form-group">
+                                        <select name="specialty" class="custom-select border-0 px-4" id="specialty" style="height: 47px;">
+                                            <option selected>Your Specialty</option>
+                                            <option value="1">Programming</option>
+                                            <option value="2">Data Science</option>
+                                            <option value="3">Digital Marketing</option>
+                                            <option value="4">Graphic Design</option>
+                                            <option value="5">Music Production</option>
+                                            <option value="6">Fitness & Nutrition</option>
+                                            <option value="7">Photography</option>
+                                            <option value="8">Business Management</option>
+                                            <option value="9">Language Learning</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <textarea class="form-control border-0 p-4" id="description" placeholder="Leave a brief description about your self" name='description'></textarea>
+                                    </div>`;
+    }else {
+        techinfo.classList.add('d-none');
+        document.querySelector('.teacher').innerHTML = " "
+    }
+    return;
+})
+
+
+
+
+
+
+
 (function ($) {
     "use strict";
     
@@ -44,14 +82,3 @@
     
 })(jQuery);
 
-const techinfo = document.querySelector('.teacher');
-const role = document.querySelector('.role');
-
-role.addEventListener('change',()=> {
-    if(role.value == 2){
-        techinfo.classList.remove('d-none');
-    }else {
-        techinfo.classList.add('d-none');
-    }
-    return;
-})
