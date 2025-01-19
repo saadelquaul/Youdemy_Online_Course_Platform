@@ -23,9 +23,10 @@ class Database {
     public function getConnection() {
         return $this->pdo;
     }
+
+    
     
 }
-
 $db = Database::getInstance()->getConnection();
 
 

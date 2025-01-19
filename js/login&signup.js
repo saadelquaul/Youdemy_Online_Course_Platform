@@ -89,8 +89,8 @@ function validateForm(isLogin,event,invalidEmailOrPassword) {
         event.preventDefault();
     }
 
-    if(role.value == 1){
-    }else if(role.value == 2){
+
+    if(role.value == 2){
         const specialty = document.getElementById('specialty').value;
         const description = document.getElementById('description').value;
         const specialtyPattern = "/^[1-9]$/";

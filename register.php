@@ -1,5 +1,8 @@
 <?php
-
+require 'includes/db.php';
+require 'Classes/Student.php';
+require 'Classes/Teacher.php';
+require 'Classes/Admin.php';
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['firstname'])) {
     $firstname = htmlspecialchars(trim($_POST['firstname']));
     $lastname = htmlspecialchars(trim($_POST['lastname']));
@@ -17,12 +20,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['firstname'])) {
     } elseif ($password !== $confirmPassword) {
         echo "<script>formMessage(event'Passwords do not match.');</script>";
     }
-    var_dump($role) ;
-    if($role === "Sign up as a"){
-        echo "<script>formMessage(event,'Select a role (Studnet or Teacher).');</script>";
-        exit;
 
-    }
+            if($role == 1) {
+                $student = new Student($firstname,$lastname,$email,$password,$role,$db);
+                $student->create();
+            } elseif ($role == 2) {
+
+                $teacher = new Teacher($firstname, $lastname, $email, $password, $role, $db, $description, $specialty);
+                $teacher->create();
+            }
+    header('location: login.php');
+    
 }
 
 
@@ -137,9 +145,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['firstname'])) {
                                     <input type="password" id='s-c-password' class="form-control border-0 p-4" placeholder="Confirm Your Passowrd" name='confirm-password'  />
                                 </div>
                                 <div class="form-group">
-                                    <select class="custom-select border-0 px-4 role" name='role' style="height: 47px;">
-                                        <option selected>Sign up as a</option>
-                                        <option value="1">Student</option>
+                                    <label for="role">Sign up as a</label>
+                                    <select class="custom-select border-0 px-4 role" name='role' id="role" style="height: 47px;">
+                                        <option selected value="1">Student</option>
                                         <option value="2">Teacher</option>
                                     </select>
                                 </div>

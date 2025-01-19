@@ -4,11 +4,14 @@ require_once 'User.php';
 
 class Teacher extends User {
 
-    protected $isActive;
+    private $description;
+    private $specialty;
+    private $isActive;
 
-    public function __construct($firstname, $lastname, $email,$password,$role,$db){
-        parent::__construct($firstname,$lastname,$email,$password,$role,$db,0);
-        
+    public function __construct($firstname, $lastname, $email,$password,$role,$db,$description,$specialty){
+        $this->description = $description;
+        $this->specialty = $specialty;
+        parent::__construct($firstname,$lastname,$email,$password,$role,$db);   
     }
 
 
@@ -91,14 +94,28 @@ class Teacher extends User {
 
     public function create(){
         $hashedPassword = password_hash($this->Password,PASSWORD_BCRYPT);
-        $stmt = $this->DB->prepare("INSERT INTO users (firstname, lastname, Email, password, role, isActive) values (:FirstName, :LastName, :Email, :Role, :isActive)");
-        $stmt->excute([
+        $stmt = $this->DB->prepare("INSERT INTO users (firstname, lastname, Email, password, role) values (:FirstName, :LastName, :Email, :password, :Role)");
+        if($stmt->execute([
             'FirstName' => $this->FirstName,
             'LastName' => $this->LastName,
             'Email' => $this->Email,
-            'Role' => $this->Role,
-            'isActive' => $this->isActive
-        ]);
+            'password' => $hashedPassword,
+            'Role' => $this->Role
+        ])){
+            $this->ID =  $this->DB->lastInsertId();
+            $stmt = $this->DB->prepare("INSERT INTO teachers (teacherID, description, total_courses, specialtyID, image, isActive) 
+            values (:id, :description, :total_courses, :specialty, :image, :isActive)");
+            $stmt->execute([
+            "id" => $this->ID,
+            "description" => $this->description,
+            "total_courses" => 0,
+            "specialty" => $this->specialty,
+            "image" => NULL,
+            "isActive" => '0'
+            
+            ]);
+
+        }
 }
 }
 
