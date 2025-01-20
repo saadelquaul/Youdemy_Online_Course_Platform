@@ -111,6 +111,12 @@ class Admin extends User {
     }
 
     public function getPendingTeachers(){
+        $stmt = $this->DB->prepare("SELECT u.firstname,u.lastname,u.email,t.teacherID, t.description,s.specialtyName,t.image,t.isActive,t.applied from teachers t 
+        join specialties s on s.specialtyID = t.specialtyID
+        join users u on u.userID = t.teacherID
+        where t.isActive = 0");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     }
 }
