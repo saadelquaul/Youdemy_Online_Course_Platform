@@ -1,7 +1,11 @@
 <?php
-session_start();
+require 'includes/session.php';
 // Check if user is logged in and is an admin
-if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'Admin') {
+if (isLoggedIn()) {
+    $user = getUser();
+}
+if (!isset($user) || $user->getRole() !== 'Admin') {
+        
     header('Location: login.php');
     exit();
 }

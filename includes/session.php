@@ -1,5 +1,8 @@
 <?php
 session_start();
+require_once 'Classes/Student.php';
+require_once 'Classes/Teacher.php';
+require_once 'Classes/Admin.php';
 
 function isLoggedIn() {
     return isset($_SESSION['user']);

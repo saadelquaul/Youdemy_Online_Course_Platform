@@ -1,6 +1,11 @@
 <?php 
 include 'includes/session.php';
-include  'includes/header.php'; 
+
+if (isLoggedIn()) {
+    $user = getUser();
+}
+
+include  'includes/header.php';
 ?>
 
     <!-- Carousel Start -->

@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -12,7 +13,7 @@
 
     <!-- Google Web Fonts -->
     <link rel="preconnect" href="https://fonts.gstatic.com">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"> 
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
@@ -25,9 +26,9 @@
 </head>
 
 <body>
-    
- <!-- Topbar Start -->
- <div class="container-fluid d-none d-lg-block">
+
+    <!-- Topbar Start -->
+    <div class="container-fluid d-none d-lg-block">
         <div class="row align-items-center py-4 px-xl-5">
             <div class="col-lg-3">
                 <a href="index.php" class="text-decoration-none">
@@ -64,8 +65,8 @@
         </div>
     </div>
     <!-- Topbar End -->
-      <!-- Navbar Start -->
- <div class="container-fluid">
+    <!-- Navbar Start -->
+    <div class="container-fluid">
         <div class="row border-top px-xl-5">
             <div class="col-lg-3 d-none d-lg-block">
                 <a class="d-flex align-items-center justify-content-between bg-secondary w-100 text-decoration-none" data-toggle="collapse" href="#navbar-vertical" style="height: 67px; padding: 0 30px;">
@@ -102,21 +103,26 @@
                             <a href="index.php" class="nav-item nav-link">Home</a>
                             <a href="course.php" class="nav-item nav-link active">Courses</a>
                             <a href="teacher.php" class="nav-item nav-link">Teachers</a>
+                            <?php
+                                if(isLoggedIn()){
+                                    switch($user->getRole()) {
+                                        case 'Admin' : echo '<a href="admin-dashboard.php" class="nav-item nav-link">Dashboard</a>' ;break;
+                                        case 'teacher' : echo '<a href="teacher-dashboard.php" class="nav-item nav-link">Dashboard</a>' ;break;
+                                        case 'student' : echo '<a href="teacher-dashboard.php" class="nav-item nav-link">Dashboard</a>' ;break;
+                                    }
+                                }
+                            ?>
                         </div>
-                        <?php if(!isLoggedIn()){
-                            echo '<a class="btn btn-secondary py-2 ml-auto px-4 d-none d-lg-block" href="login.php">Login</a>' . 
-                            '<a class="btn btn-primary py-2 px-4 ml-auto d-none d-lg-block" href="register.php">Join Now</a>';
-                        }else {
+                        <?php if (!isLoggedIn()) {
+                            echo '<a class="btn btn-secondary py-2 ml-auto px-4 d-none d-lg-block" href="login.php">Login</a>' .
+                                '<a class="btn btn-primary py-2 px-4 ml-auto d-none d-lg-block" href="register.php">Join Now</a>';
+                        } else {
                             echo '<a class="btn btn-secondary py-2 px-4 ml-auto d-none d-lg-block" href="logout.php">Logout</a>';
                         } ?>
-                        
+
                     </div>
                 </nav>
             </div>
         </div>
     </div>
     <!-- Navbar End -->
-
-
-
-   
