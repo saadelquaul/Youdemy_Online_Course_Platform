@@ -4,7 +4,6 @@ class Admin extends User {
     
     
 
-    
 
     // Manage users (activate, suspend, delete)
     public function manageUser($user_id, $action) {
@@ -95,6 +94,23 @@ class Admin extends User {
     }
 
     public function create(){
+
+    }
+    public function getUsers() {
+        $stmt = $this->DB->prepare("SELECT userID, firstName, lastName, Email, role, status FROM users");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getUsersOffSet($offset, $limit) {
+        $stmt = $this->DB->prepare("SELECT userID, firstName, lastName, Email, role, status FROM users LIMIT :offset, :limit");
+        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getPendingTeachers(){
 
     }
 }

@@ -1,35 +1,27 @@
 <?php
 require 'includes/session.php';
-// Check if user is logged in and is an admin
+
 if (isLoggedIn()) {
     $user = getUser();
 }
 if (!isset($user) || $user->getRole() !== 'Admin') {
-        
+
     header('Location: login.php');
     exit();
 }
 
-// Placeholder data - in real implementation, fetch from database
-$adminStats = [
-    'total_users' => 1250,
-    'total_courses' => 85,
-    'total_enrollments' => 3420,
-    'most_popular_course' => 'Web Development Basics'
-];
+$adminStats = $user->viewGlobalStatistics();
 
-###
-$recentActivity = [
-    ['type' => 'user', 'message' => 'New teacher registration: John Doe', 'time' => '2 hours ago'],
-    ['type' => 'course', 'message' => 'New course added: Advanced PHP', 'time' => '5 hours ago'],
-    ['type' => 'enrollment', 'message' => '15 new enrollments in JavaScript Course', 'time' => '1 day ago']
-];
+$usersPerPage = 10;
+$totalUsers = $adminStats['total_users'];
+$totalPages = ceil($totalUsers / $usersPerPage);
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$page = max(1, min($page, $totalPages));
 
-$users = [
-    ['id' => 1, 'username' => 'john_doe', 'email' => 'john@example.com', 'role' => 'teacher', 'status' => 'active'],
-    ['id' => 2, 'username' => 'jane_smith', 'email' => 'jane@example.com', 'role' => 'student', 'status' => 'active'],
-    ['id' => 3, 'username' => 'admin_user', 'email' => 'admin@example.com', 'role' => 'admin', 'status' => 'active']
-];
+$offset = ($page - 1) * $usersPerPage;
+$users = $user->getUsersOffSet($offset, $usersPerPage);
+
+$pendingTeachers = $user->getPendingTeachers();
 ?>
 
 <!DOCTYPE html>
@@ -192,7 +184,7 @@ $users = [
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" href="#users">
+                <a class="nav-link" href="#ManageUsers">
                     <i class="fas fa-users me-2"></i>Manage Users
                 </a>
             </li>
@@ -227,7 +219,7 @@ $users = [
                     <div class="dropdown">
                         <button class="btn btn-link dropdown-toggle" type="button" id="profileDropdown" data-bs-toggle="dropdown">
                             <i class="fas fa-user-circle fa-lg me-2"></i>
-                            <?php echo htmlspecialchars($_SESSION['name'] ?? 'Admin'); ?>
+                            <?php echo htmlspecialchars($user->getFirstName() ?? 'Admin'); ?>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="#profile">
@@ -245,7 +237,7 @@ $users = [
         <div class="dashboard-section">
             <div class="row mb-4">
                 <div class="col-12">
-                    <h2>Welcome back, <?php echo htmlspecialchars($_SESSION['name'] ?? 'Admin'); ?>!</h2>
+                    <h2>Welcome back, <?php echo htmlspecialchars($user->getFirstName() ?? 'Admin'); ?>!</h2>
                 </div>
             </div>
 
@@ -356,7 +348,7 @@ $users = [
                 </div>
 
                 <!-- User Management -->
-                <div class="container-fluid py-4">
+                <div class="container-fluid py-4" id="ManageUsers">
                     <div class="row">
                         <div class="col-12">
                             <div class="card">
@@ -379,24 +371,23 @@ $users = [
                                                     <th>Email</th>
                                                     <th>Role</th>
                                                     <th>Status</th>
-                                                    <th>Joined Date</th>
                                                     <th>Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 <?php foreach ($users as $user): ?>
                                                     <tr>
-                                                        <td><?php echo htmlspecialchars($user['id']); ?></td>
-                                                        <td><?php echo htmlspecialchars($user['name']); ?></td>
-                                                        <td><?php echo htmlspecialchars($user['email']); ?></td>
+                                                        <td><?php echo htmlspecialchars($user['userID']); ?></td>
+                                                        <td><?php echo htmlspecialchars($user['firstName'] . " " . $user['lastName']); ?></td>
+                                                        <td><?php echo htmlspecialchars($user['Email']); ?></td>
                                                         <td>
-                                                            <span class="badge bg-<?php echo $user['role'] === 'admin' ? 'danger' : ($user['role'] === 'teacher' ? 'primary' : 'success'); ?>">
+                                                            <span class="badge bg-<?php echo $user['role'] === 'Admin' ? 'danger' : ($user['role'] === 'teacher' ? 'primary' : 'success'); ?>">
                                                                 <?php echo htmlspecialchars($user['role']); ?>
                                                             </span>
                                                         </td>
                                                         <td>
                                                             <form method="POST" class="d-inline">
-                                                                <input type="hidden" name="userId" value="<?php echo $user['id']; ?>">
+                                                                <input type="hidden" name="userId" value="<?php echo $user['userID']; ?>">
                                                                 <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
                                                                     <option value="active" <?php echo $user['status'] === 'active' ? 'selected' : ''; ?>>Active</option>
                                                                     <option value="suspended" <?php echo $user['status'] === 'suspended' ? 'selected' : ''; ?>>Suspended</option>
@@ -405,12 +396,14 @@ $users = [
                                                                 <input type="hidden" name="updateStatus" value="1">
                                                             </form>
                                                         </td>
-                                                        <td><?php echo date('M d, Y', strtotime($user['created_at'])); ?></td>
                                                         <td>
-                                                            <button class="btn btn-sm btn-outline-primary" onclick="viewUser(<?php echo $user['id']; ?>)">
+                                                            <button class="btn btn-sm btn-outline-primary" onclick="viewUser(<?php echo $user['userID']; ?>)">
                                                                 <i class="fas fa-eye"></i>
                                                             </button>
-                                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteUser(<?php echo $user['id']; ?>)">
+                                                            <!-- <button class="btn btn-sm btn-outline-primary" onclick="viewUser("<?php echo $user['userID']; ?>>
+                                                                <i class="fas fa-eye"></i>
+                                                            </button> -->
+                                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteUser(<?php echo $user['userID']; ?>)">
                                                                 <i class="fas fa-trash"></i>
                                                             </button>
                                                         </td>
@@ -436,255 +429,288 @@ $users = [
                     </div>
                 </div>
                 <!-- User View Modal -->
-                <div class="modal fade" id="userModal" tabindex="-1">
+                <div class="modal fade userDetailsModal" id="userModal" tabindex="-1">
                     <div class="modal-dialog">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title">User Details</h5>
+                                <h5 class="modal-title" id="userDetailsModalLabel">User Details</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
                             <div class="modal-body">
                                 <!-- User details will be loaded here -->
+                                <div id="userDetailsContent"></div>
                             </div>
+
                         </div>
                     </div>
                 </div>
-                <div class="container-fluid py-4">
-        <!-- Filters Section -->
-        <div class="card mb-4">
-            <div class="card-body">
-                <form class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label">Category</label>
-                        <select class="form-select" name="category">
-                            <option value="">All Categories</option>
-                            <!-- Add categories dynamically -->
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Status</label>
-                        <select class="form-select" name="status">
-                            <option value="">All Statuses</option>
-                            <option value="active">Active</option>
-                            <option value="pending">Pending</option>
-                            <option value="suspended">Suspended</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Search</label>
-                        <input type="text" class="form-control" placeholder="Search courses...">
-                    </div>
-                    <div class="col-md-2 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="fas fa-filter me-2"></i>Apply Filters
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Courses Grid -->
-        <div class="row">
-            <?php foreach ($courses as $course): ?>
-            <div class="col-md-6 col-lg-4 mb-4">
-                <div class="card course-card h-100">
-                    <div class="card-header bg-white">
-                        <span class="status-badge badge bg-<?php echo $course['status'] === 'active' ? 'success' : ($course['status'] === 'pending' ? 'warning' : 'danger'); ?>">
-                            <?php echo ucfirst($course['status']); ?>
-                        </span>
-                        <h5 class="card-title mb-0"><?php echo htmlspecialchars($course['title']); ?></h5>
-                    </div>
+                <!-- <div class="container-fluid py-4"> -->
+                <!-- Filters Section -->
+                <div class="card mb-4">
                     <div class="card-body">
-                        <div class="mb-3">
-                            <small class="text-muted">
-                                <i class="fas fa-user me-2"></i><?php echo htmlspecialchars($course['teacher_name']); ?>
-                            </small>
-                            <br>
-                            <small class="text-muted">
-                                <i class="fas fa-folder me-2"></i><?php echo htmlspecialchars($course['category_name']); ?>
-                            </small>
-                            <br>
-                            <small class="text-muted">
-                                <i class="fas fa-users me-2"></i><?php echo $course['enrollment_count']; ?> students
-                            </small>
-                        </div>
-                        
-                        <p class="card-text"><?php echo substr(htmlspecialchars($course['description']), 0, 100); ?>...</p>
-                        
-                        <div class="d-flex justify-content-between align-items-center mt-3">
-                            <form method="POST" class="d-inline">
-                                <input type="hidden" name="courseId" value="<?php echo $course['id']; ?>">
-                                <select name="status" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
-                                    <option value="active" <?php echo $course['status'] === 'active' ? 'selected' : ''; ?>>Active</option>
-                                    <option value="pending" <?php echo $course['status'] === 'pending' ? 'selected' : ''; ?>>Pending</option>
-                                    <option value="suspended" <?php echo $course['status'] === 'suspended' ? 'selected' : ''; ?>>Suspended</option>
+                        <form class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Category</label>
+                                <select class="form-select" name="category">
+                                    <option value="">All Categories</option>
+                                    <!-- Add categories dynamically -->
                                 </select>
-                                <input type="hidden" name="updateStatus" value="1">
-                            </form>
-                            
-                            <div class="btn-group">
-                                <button class="btn btn-sm btn-outline-primary" onclick="viewCourse(<?php echo $course['id']; ?>)">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-outline-danger" onclick="deleteCourse(<?php echo $course['id']; ?>)">
-                                    <i class="fas fa-trash"></i>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Status</label>
+                                <select class="form-select" name="status">
+                                    <option value="">All Statuses</option>
+                                    <option value="active">Active</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="suspended">Suspended</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Search</label>
+                                <input type="text" class="form-control" placeholder="Search courses...">
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-filter me-2"></i>Apply Filters
                                 </button>
                             </div>
-                        </div>
+                        </form>
                     </div>
                 </div>
-            </div>
-            <?php endforeach; ?>
-        </div>
 
-        <div class="container-fluid py-4">
-        <div class="row">
-            <!-- Categories Section -->
-            <div class="col-md-6 mb-4">
-                <div class="card">
-                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Categories</h5>
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
-                            <i class="fas fa-plus me-2"></i>Add Category
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Courses</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($categories as $category): ?>
-                                    <tr>
-                                        <td><?php echo htmlspecialchars($category['name']); ?></td>
-                                        <td>
-                                            <?php 
-                                            $stmt = $pdo->prepare("SELECT COUNT(*) FROM courses WHERE category_id = ?");
-                                            $stmt->execute([$category['id']]);
-                                            echo $stmt->fetchColumn();
-                                            ?>
-                                        </td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary" onclick="editCategory(<?php echo $category['id']; ?>)">
-                                                <i class="fas fa-edit"></i>
+                <!-- Courses Grid -->
+                <div class="row">
+                    <?php foreach ($courses as $course): ?>
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card course-card h-100">
+                                <div class="card-header bg-white">
+                                    <span class="status-badge badge bg-<?php echo $course['status'] === 'active' ? 'success' : ($course['status'] === 'pending' ? 'warning' : 'danger'); ?>">
+                                        <?php echo ucfirst($course['status']); ?>
+                                    </span>
+                                    <h5 class="card-title mb-0"><?php echo htmlspecialchars($course['title']); ?></h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <small class="text-muted">
+                                            <i class="fas fa-user me-2"></i><?php echo htmlspecialchars($course['teacher_name']); ?>
+                                        </small>
+                                        <br>
+                                        <small class="text-muted">
+                                            <i class="fas fa-folder me-2"></i><?php echo htmlspecialchars($course['category_name']); ?>
+                                        </small>
+                                        <br>
+                                        <small class="text-muted">
+                                            <i class="fas fa-users me-2"></i><?php echo $course['enrollment_count']; ?> students
+                                        </small>
+                                    </div>
+
+                                    <p class="card-text"><?php echo substr(htmlspecialchars($course['description']), 0, 100); ?>...</p>
+
+                                    <div class="d-flex justify-content-between align-items-center mt-3">
+                                        <form method="POST" class="d-inline">
+                                            <input type="hidden" name="courseId" value="<?php echo $course['id']; ?>">
+                                            <select name="status" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
+                                                <option value="active" <?php echo $course['status'] === 'active' ? 'selected' : ''; ?>>Active</option>
+                                                <option value="pending" <?php echo $course['status'] === 'pending' ? 'selected' : ''; ?>>Pending</option>
+                                                <option value="suspended" <?php echo $course['status'] === 'suspended' ? 'selected' : ''; ?>>Suspended</option>
+                                            </select>
+                                            <input type="hidden" name="updateStatus" value="1">
+                                        </form>
+
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-primary" onclick="viewCourse(<?php echo $course['id']; ?>)">
+                                                <i class="fas fa-eye"></i>
                                             </button>
-                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteCategory(<?php echo $category['id']; ?>)">
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteCourse(<?php echo $course['id']; ?>)">
                                                 <i class="fas fa-trash"></i>
                                             </button>
-                                        </td>
-                                    </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    <?php endforeach; ?>
                 </div>
-            </div>
 
-            <!-- Tags Section -->
-            <div class="col-md-6 mb-4">
-                <div class="card">
-                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Tags</h5>
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTagsModal">
-                            <i class="fas fa-plus me-2"></i>Add Tags
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-4">
-                            <div class="d-flex flex-wrap gap-2">
-                                <?php foreach ($tags as $tag): ?>
-                                <span class="badge bg-primary p-2">
-                                    <?php echo htmlspecialchars($tag['name']); ?>
-                                    <button class="btn btn-sm text-white" onclick="deleteTag(<?php echo $tag['id']; ?>)">
-                                        <i class="fas fa-times"></i>
+                <div class="container-fluid py-4">
+                    <div class="row">
+                        <!-- Categories Section -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Categories</h5>
+                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                                        <i class="fas fa-plus me-2"></i>Add Category
                                     </button>
-                                </span>
-                                <?php endforeach; ?>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Name</th>
+                                                    <th>Courses</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php foreach ($categories as $category): ?>
+                                                    <tr>
+                                                        <td><?php echo htmlspecialchars($category['name']); ?></td>
+                                                        <td>
+                                                            <?php
+                                                            $stmt = $pdo->prepare("SELECT COUNT(*) FROM courses WHERE category_id = ?");
+                                                            $stmt->execute([$category['id']]);
+                                                            echo $stmt->fetchColumn();
+                                                            ?>
+                                                        </td>
+                                                        <td>
+                                                            <button class="btn btn-sm btn-outline-primary" onclick="editCategory(<?php echo $category['id']; ?>)">
+                                                                <i class="fas fa-edit"></i>
+                                                            </button>
+                                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteCategory(<?php echo $category['id']; ?>)">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tags Section -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Tags</h5>
+                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTagsModal">
+                                        <i class="fas fa-plus me-2"></i>Add Tags
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-4">
+                                        <div class="d-flex flex-wrap gap-2">
+                                            <?php foreach ($tags as $tag): ?>
+                                                <span class="badge bg-primary p-2">
+                                                    <?php echo htmlspecialchars($tag['name']); ?>
+                                                    <button class="btn btn-sm text-white" onclick="deleteTag(<?php echo $tag['id']; ?>)">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </span>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
 
-    <div class="modal fade" id="addCategoryModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form method="POST">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Add Category</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label">Category Name</label>
-                            <input type="text" class="form-control" name="name" required>
+                <div class="modal fade" id="addCategoryModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form method="POST">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Add Category</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Category Name</label>
+                                        <input type="text" class="form-control" name="name" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Description</label>
+                                        <textarea class="form-control" name="description" rows="3"></textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-primary">Add Category</button>
+                                    <input type="hidden" name="action" value="addCategory">
+                                </div>
+                            </form>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Description</label>
-                            <textarea class="form-control" name="description" rows="3"></textarea>
-                        </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Add Category</button>
-                        <input type="hidden" name="action" value="addCategory">
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+                </div>
 
-    <div class="modal fade" id="addTagsModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form method="POST">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Add Tags</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label">Tags (comma-separated)</label>
-                            <textarea class="form-control" name="tags" rows="3" placeholder="tag1, tag2, tag3"></textarea>
-                            <small class="text-muted">Enter multiple tags separated by commas</small>
+                <div class="modal fade" id="addTagsModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form method="POST">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Add Tags</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Tags (comma-separated)</label>
+                                        <textarea class="form-control" name="tags" rows="3" placeholder="tag1, tag2, tag3"></textarea>
+                                        <small class="text-muted">Enter multiple tags separated by commas</small>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-primary">Add Tags</button>
+                                    <input type="hidden" name="action" value="addTags">
+                                </div>
+                            </form>
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Add Tags</button>
-                        <input type="hidden" name="action" value="addTags">
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+                </div>
 
                 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
                 <script>
-                    function viewUser(userId) {
-                        // Implement user view functionality
-                        const modal = new bootstrap.Modal(document.getElementById('userModal'));
-                        modal.show();
-                    }
+                    function viewUser(userID) {
+    console.log(userID);
+    
+    // Fetch user details from the server
+    fetch('../getUserDetails.php?userID=' + userID)
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+            
+            // Populate the modal with user details
+            const userDetailsContent = document.getElementById('userDetailsContent');
+            userDetailsContent.innerHTML = `
+                <p><strong>ID:</strong> ${data.userID}</p>
+                <p><strong>Firstname:</strong> ${data.firstName}</p>
+                <p><strong>Lastname:</strong> ${data.lastName}</p>
+                <p><strong>Email:</strong> ${data.Email}</p>
+                <p><strong>Role:</strong> ${data.role}</p>
+                <p><strong>Status:</strong> ${data.status}</p>
+                <p><strong>Uploaded courses:</strong> ${data.uploaded_courses ?? 0} </p>
+                <p><strong>Total enrollments:</strong> ${data.total_enrollments ?? 0} </p>
+            `;
+            // Show the modal
+            const userDetailsModal = new bootstrap.Modal(document.querySelector('.userDetailsModal'));
+            userDetailsModal.show();
+        })
+        .catch(error => {
+            console.error('Error fetching user details:', error);
+        });
+}
 
-                    function deleteUser(userId) {
-                        if (confirm('Are you sure you want to delete this user?')) {
-                            // Implement delete functionality
-                        }
-                    }
-                    function viewDetails(applicationId) {
-            // Implement view details functionality
-            const modal = new bootstrap.Modal(document.getElementById('applicationModal'));
-            modal.show();
-        }
+                    // function viewUser(userId) {
+                    //     // Implement user view functionality
+                    //     const modal = new bootstrap.Modal(document.getElementById('userModal'));
+                    //     modal.show();
+                    // }
+
+                    // function deleteUser(userId) {
+                    //     if (confirm('Are you sure you want to delete this user?')) {
+                    //         // Implement delete functionality
+                    //     }
+                    // }
+
+                    // function viewDetails(applicationId) {
+                    //     // Implement view details functionality
+                    //     const modal = new bootstrap.Modal(document.getElementById('applicationModal'));
+                    //     modal.show();
+                    // }
                 </script>
 </body>
 

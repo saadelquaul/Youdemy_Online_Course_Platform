@@ -1,6 +1,7 @@
 <?php
 require_once 'User.php';
 class Student extends User {
+    
 
     public function __construct($firstname,$lastname,$email,$password,$role){
         parent::__construct($firstname,$lastname,$email,$password,$role);
@@ -28,13 +29,14 @@ class Student extends User {
 
     public function create(){
         $hashedPassword = password_hash($this->Password,PASSWORD_BCRYPT);
-        $stmt = $this->DB->prepare("INSERT INTO users (firstname, lastname, Email, password, role) values (:FirstName, :LastName, :Email, :password, :Role)");
+        $stmt = $this->DB->prepare("INSERT INTO users (firstname, lastname, Email, password, role, status) values (:FirstName, :LastName, :Email, :password, :Role, :status)");
         $stmt->execute([
             'FirstName' => $this->FirstName,
             'LastName' => $this->LastName,
             'Email' => $this->Email,
             'password' => $hashedPassword,
-            'Role' => $this->Role
+            'Role' => $this->Role,
+            'status' => $this->status
         ]);
 }
 }

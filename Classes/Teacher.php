@@ -10,10 +10,10 @@ class Teacher extends User {
     private $total_courses ;
     private $image;
 
-    public function __construct($firstname, $lastname, $email,$password,$role,$description,$specialty){
+    public function __construct($firstname, $lastname, $email,$password,$role,$description,$specialty,$status='inactive'){
         $this->description = $description;
         $this->specialty = $specialty;
-        parent::__construct($firstname,$lastname,$email,$password,$role);   
+        parent::__construct($firstname,$lastname,$email,$password,$role,$status);
     }
 
     public function __sleep() {
@@ -120,13 +120,14 @@ class Teacher extends User {
 
     public function create(){
         $hashedPassword = password_hash($this->Password,PASSWORD_BCRYPT);
-        $stmt = $this->DB->prepare("INSERT INTO users (firstname, lastname, Email, password, role) values (:FirstName, :LastName, :Email, :password, :Role)");
+        $stmt = $this->DB->prepare("INSERT INTO users (firstname, lastname, Email, password, role,status) values (:FirstName, :LastName, :Email, :password, :Role, :status)");
         if($stmt->execute([
             'FirstName' => $this->FirstName,
             'LastName' => $this->LastName,
             'Email' => $this->Email,
             'password' => $hashedPassword,
-            'Role' => $this->Role
+            'Role' => $this->Role,
+            'status' => $this->status
         ])){
             $this->ID =  $this->DB->lastInsertId();
             $stmt = $this->DB->prepare("INSERT INTO teachers (teacherID, description, total_courses, specialtyID, image, isActive) 
