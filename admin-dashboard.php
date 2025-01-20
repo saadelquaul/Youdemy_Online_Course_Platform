@@ -1,10 +1,10 @@
 <?php
 session_start();
 // Check if user is logged in and is an admin
-// if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-//     header('Location: login.php');
-//     exit();
-// }
+if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'Admin') {
+    header('Location: login.php');
+    exit();
+}
 
 // Placeholder data - in real implementation, fetch from database
 $adminStats = [

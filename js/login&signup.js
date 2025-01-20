@@ -8,7 +8,6 @@ function showAlert(message) {
     overlay.style.display = 'block';
 }
 
-
 function closeAlert() {
     const alertBox = document.getElementById('alertBox');
     const overlay = document.getElementById('overlay');
@@ -16,16 +15,22 @@ function closeAlert() {
     alertBox.style.display = 'none';
     overlay.style.display = 'none';
 }
+
+
+
 function formMessage(event,message){
     showAlert(message);
     event.preventDefault();
 }
 
-
-function validateForm(isLogin,event,invalidEmailOrPassword) {
+function validateForm(isLogin,event,invalidEmailOrPassword=1,isNotActive=0) {
     const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
-
+    
+    if(isLogin == 1 && isNotActive == 1){
+        showAlert('Please wait till we validate your informations!.');
+        event.preventDefault();
+ }
     if(isLogin === 1){
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;

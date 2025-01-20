@@ -1,5 +1,5 @@
 <?php
-
+require 'includes/db.php';
 abstract class User
 {
     protected $FirstName;
@@ -10,13 +10,20 @@ abstract class User
     protected $DB;
     protected $ID;
 
-    public function __construct($firstname,$lastnme,$email,$password,$role,$db) {
+    public function __construct($firstname,$lastnme,$email,$password,$role) {
         $this->FirstName = $firstname;
         $this->LastName = $lastnme;
         $this->Email = $email;
         $this->Password = $password;
         $this->Role = $role;
-        $this->DB = $db;
+        $this->DB = Database::getInstance();
+    }
+    public function __sleep() {
+        return ['FirstName', 'LastName', 'Email', 'Password', 'Role', 'ID'];
+    }
+
+    public function __wakeup() {
+     $this->DB = Database::getInstance();
     }
 
     public function setID(int $ID)

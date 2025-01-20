@@ -103,8 +103,13 @@
                             <a href="course.php" class="nav-item nav-link active">Courses</a>
                             <a href="teacher.php" class="nav-item nav-link">Teachers</a>
                         </div>
-                        <a class="btn btn-secondary py-2 ml-auto px-4 d-none d-lg-block" href="login.php">Login</a>
-                        <a class="btn btn-primary py-2 px-4 ml-auto d-none d-lg-block" href="register.php">Join Now</a>
+                        <?php if(!isLoggedIn()){
+                            echo '<a class="btn btn-secondary py-2 ml-auto px-4 d-none d-lg-block" href="login.php">Login</a>' . 
+                            '<a class="btn btn-primary py-2 px-4 ml-auto d-none d-lg-block" href="register.php">Join Now</a>';
+                        }else {
+                            echo '<a class="btn btn-secondary py-2 px-4 ml-auto d-none d-lg-block" href="logout.php">Logout</a>';
+                        } ?>
+                        
                     </div>
                 </nav>
             </div>

@@ -2,14 +2,14 @@
 require_once 'User.php';
 class Student extends User {
 
-    public function __construct($firstname,$lastname,$email,$password,$role,$db){
-        parent::__construct($firstname,$lastname,$email,$password,$role,$db);
+    public function __construct($firstname,$lastname,$email,$password,$role){
+        parent::__construct($firstname,$lastname,$email,$password,$role);
 
     }
 
     public function enrollInCourse($course_id){
         $stmt = $this->DB->prepare("INSERT INTO enrollments (student_id, course_id) values (:studentID,:courseID)");
-        if($stmt->excute([
+        if($stmt->execute([
             'studentID' => $this->ID,
             'courseID' => $course_id
         ])) return true;

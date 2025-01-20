@@ -1,8 +1,11 @@
 <?php
-require 'includes/db.php';
 require 'Classes/Student.php';
 require 'Classes/Teacher.php';
 require 'Classes/Admin.php';
+if(isset($_SESSION['user'])){
+    header('location: index.php');
+    exit;
+}
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['firstname'])) {
     $firstname = htmlspecialchars(trim($_POST['firstname']));
     $lastname = htmlspecialchars(trim($_POST['lastname']));
@@ -22,11 +25,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['firstname'])) {
     }
 
             if($role == 1) {
-                $student = new Student($firstname,$lastname,$email,$password,$role,$db);
+                $student = new Student($firstname,$lastname,$email,$password,$role);
                 $student->create();
             } elseif ($role == 2) {
 
-                $teacher = new Teacher($firstname, $lastname, $email, $password, $role, $db, $description, $specialty);
+                $teacher = new Teacher($firstname, $lastname, $email, $password, $role, $description, $specialty);
                 $teacher->create();
             }
     header('location: login.php');

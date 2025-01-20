@@ -1,5 +1,8 @@
-<?php include  'includes/header.php' ?>
-    
+<?php 
+include 'includes/session.php';
+include  'includes/header.php'; 
+?>
+
     <!-- Carousel Start -->
     <div class="container-fluid p-0 pb-5 mb-5">
         <div id="header-carousel" class="carousel slide carousel-fade" data-ride="carousel">

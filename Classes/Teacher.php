@@ -6,25 +6,38 @@ class Teacher extends User {
 
     private $description;
     private $specialty;
-    private $isActive;
+    private $isActive = 0;
+    private $total_courses ;
+    private $image;
 
-    public function __construct($firstname, $lastname, $email,$password,$role,$db,$description,$specialty){
+    public function __construct($firstname, $lastname, $email,$password,$role,$description,$specialty){
         $this->description = $description;
         $this->specialty = $specialty;
-        parent::__construct($firstname,$lastname,$email,$password,$role,$db);   
+        parent::__construct($firstname,$lastname,$email,$password,$role);   
     }
 
-
+    public function __sleep() {
+        return array_merge(parent::__sleep(), ['description', 'specialty', 'isActive', 'total_courses', 'image']);
+    }
+    public function __wakeup() {
+        parent::__wakeup();
+    }
+    public function setStatu($status){
+        $this->isActive = $status;
+    }
+    public function getStatu(){
+       return $this->isActive;
+    }
     public function addCourse($Course){
         $stmt = $this->DB->prepare("INSERT INTO courses (title, description, content, teacher_id, category_id) values (:title, :description, :content, :teacher_id, :category_id)");
-        $stmt->excute([
+        $stmt->execute([
             'title' => $Course->title,
             'description' => $Course->description,
             'content' =>$Course->content,
             'teacher_id' => $this->ID,
             'category_id' => $Course->category_id
         ]);
-        $Course->setID($stmt->db->lastInsertId());
+        $Course->setID($this->DB->lastInsertId());
         if (!empty($Course->tags)){
             foreach($Course->tags as $tag)
             {
@@ -47,6 +60,19 @@ class Teacher extends User {
     }
 
 
+    public function setTotal_courses($NumOfCourses){
+        $this->total_courses = $NumOfCourses;
+    }
+    public function getTotal_courses(){
+        return $this->total_courses ;
+    }
+
+    public function setImage($image){
+        $this->image = $image;
+    }
+    public function getImage(){
+    return  $this->image;
+    }
 
     public function manageCourse($course_id,$action,$Course)
     {
@@ -111,7 +137,7 @@ class Teacher extends User {
             "total_courses" => 0,
             "specialty" => $this->specialty,
             "image" => NULL,
-            "isActive" => '0'
+            "isActive" => $this->isActive
             
             ]);
 

@@ -2,12 +2,11 @@
 
 class Database {
     private static $instance = null;
-    private $pdo;
 
     private function __construct() {
         try {
-            $this->pdo = new PDO('mysql:host=localhost;dbname=youdemy', 'root','123456');
-            $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            self::$instance = new PDO('mysql:host=localhost;dbname=youdemy', 'root','123456');
+            self::$instance->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOException $e) {
             die("Database connection failed: " . $e->getMessage());
         }
@@ -15,19 +14,14 @@ class Database {
 
     public static function getInstance() {
         if (self::$instance === null) {
-            self::$instance = new Database();
+            new self();
         }
         return self::$instance;
-    }
-
-    public function getConnection() {
-        return $this->pdo;
     }
 
     
     
 }
-$db = Database::getInstance()->getConnection();
 
 
 ?>

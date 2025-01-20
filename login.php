@@ -1,61 +1,53 @@
 <?php
+include 'includes/session.php';
+require 'Classes/Student.php';
+require 'Classes/Teacher.php';
+require 'Classes/Admin.php';
+if(isLoggedIn()){
+    header('location:index.php');
+}
+$error_message;
 
-require_once 'Classes/Admin.php';
-require_once 'Classes/Teacher.php';
-require_once 'Classes/Student.php';
-require_once 'includes/db.php';
-
-$error;
-if($_SERVER['REQUEST_METHOD'] === 'POST' and isset($_POST['email']))
-{   
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email'])) {
     $email = $_POST['email'];
     $password = $_POST['password'];
     
-    $user = User::getUserByEmail($email,$db);
-    
-    if(isset($user['Email'])){
-        if(password_verify($password,$user['password'])){
-            session_start();
-            if($user['role'] === 'student'){
-                $student = new Studnet($user['firstName'],$user['lastName'],$user['Email'],$user['password'],$user['role'],$db);
+    $user = User::getUserByEmail($email, Database::getInstance());
+    if ($user) {
+        if (password_verify($password, $user['password'])) {
+            if ($user['role'] === 'student') {
+                $student = new Student($user['firstName'], $user['lastName'], $user['Email'], $user['password'], $user['role']);
                 $_SESSION['user'] = serialize($student);
-                header('Loction: student-dashboard.php');
+                header('Location: student-dashboard.php');
                 exit;
-
-            }elseif($user['role'] === 'teacher')
-            {
-                $teacher = new Teacher($user['firstName'],$user['lastName'],$user['Email'],$user['password'],$user['role'],$db);
-                $_SESSION['user'] = serialize($teacher);
-                header('Loction: teacher-dashboard');
+            } elseif ($user['role'] === 'teacher') {
+                $stmt = Database::getInstance()->prepare("SELECT description, total_courses, specialtyID, image, isActive FROM teachers WHERE teacherID = :id");
+                $stmt->execute(['id' => $user['userID']]);
+                $teacherInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($teacherInfo['isActive'] == 0) {
+                    $error_message = 'Your account is not active yet.Please try again later!';
+                } else {
+                    $teacher = new Teacher($user['firstName'], $user['lastName'], $user['Email'], $user['password'], $user['role'], $teacherInfo['description'], $teacherInfo['specialtyID']);
+                    $teacher->setTotal_courses($teacherInfo['total_courses']);
+                    $teacher->setImage($teacherInfo['image']);
+                    $teacher->setStatu($teacherInfo['isActive']);
+                    $_SESSION['user'] = serialize($teacher);
+                    header('Location: teacher-dashboard.php');
+                    exit;
+                }
+            } elseif ($user['role'] === 'Admin') {
+                $admin = new Admin($user['firstName'], $user['lastName'], $user['Email'], $user['password'], $user['role']);
+                $_SESSION['user'] = serialize($admin);
+                header('Location: admin-dashboard.php');
                 exit;
-                
-            }elseif($user['role'] === 'Admin'){
-                $admin = new Admin($user['firstName'],$user['lastName'],$user['Email'],$user['password'],$user['role'],$db);
-                $_SESSION['user'] = serialize($student);
-                header('Loction: admin-dashboard.php');
-                exit;
-
             }
-
-
-        }else{
-            echo "<script>validateForm(1,event,0)</script>";
-
+        } else {
+            $error_message = 'Invalid email or password.';
         }
+    } else {
+        $error_message = 'Invalid email or password.';
     }
-    else{
-        echo "<script>validateForm(1,event,0)</script>";
-    }
-
 }
-
-
-
-
-
-
-
-
 
 ?>
 
@@ -86,14 +78,6 @@ if($_SERVER['REQUEST_METHOD'] === 'POST' and isset($_POST['email']))
     <!-- Customized Bootstrap Stylesheet -->
     <link href="css/style.css" rel="stylesheet">
     <link rel="stylesheet" href="css/login&signup.css">
-    <script>
-
-
-
-
-
-    </script>
-
 </head>
 
 <body>
@@ -152,17 +136,22 @@ if($_SERVER['REQUEST_METHOD'] === 'POST' and isset($_POST['email']))
                             <h1 class="m-0">Login</h1>
                         </div>
                         <div class="card-body rounded-bottom bg-primary p-5">
-                            <form method='post' action='login.php' onsubmit="validateForm(1,event)" >
+                            <?php if (isset($error_message)){
+                                echo "<div class='alert alert-danger'>";
+                                   echo  "$error_message";
+                               echo "</div>";
+                            }?>
+                            <form id="loginForm" method="post" action="login.php">
                                 <div class="form-group">
                                     <input type="email" class="form-control border-0 p-4" id="email" name="email" placeholder="Your email" required />
                                 </div>
                                 <div class="form-group">
-                                    <input type="password" class="form-control border-0 p-4" id="password" placeholder="Your Password" name='password' required/>
+                                    <input type="password" class="form-control border-0 p-4" id="password" placeholder="Your Password" name="password" required />
                                 </div>
                                 <div>
                                     <button class="btn btn-dark btn-block border-0 py-3" type="submit">Login</button>
                                 </div>
-                                <p>Don't have an account?. <a href="register.php" style='color:black;'>Sign up</a></p>
+                                <p>Don't have an account? <a href="register.php" style="color:black;">Sign up</a></p>
                             </form>
                         </div>
                     </div>
@@ -172,3 +161,5 @@ if($_SERVER['REQUEST_METHOD'] === 'POST' and isset($_POST['email']))
     </div>
     <?php include 'includes/footer.php' ?>
     <script src="js/login&signup.js"></script>
+</body>
+</html>
