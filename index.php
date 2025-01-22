@@ -1,10 +1,11 @@
 <?php 
 include 'includes/session.php';
-
+// // require 'Classes/Admin.php';
+// require_once 'includes/autoloader.php';
+$user = null;
 if (isLoggedIn()) {
     $user = getUser();
 }
-
 include  'includes/header.php';
 ?>
 

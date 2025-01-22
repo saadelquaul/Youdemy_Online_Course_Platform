@@ -1,11 +1,12 @@
 <?php
-require_once 'User.php';
+
 class Admin extends User {
     
     
 
-
-    // Manage users (activate, suspend, delete)
+    public function __construct($firstname,$lastname,$email,$password,$role){
+        parent::__construct($firstname,$lastname,$email,$password,$role);
+    }
     public function manageUser($user_id, $action) {
         switch ($action) {
             case 'activate':
@@ -23,7 +24,7 @@ class Admin extends User {
         $stmt->execute(['user_id' => $user_id]);
     }
 
-    // Manage content (courses, categories, tags)
+    
     public function manageContent($type, $action, $id, $data = []) {
         switch ($type) {
             case 'course':
@@ -59,7 +60,6 @@ class Admin extends User {
         }
     }
 
-    // View global statistics
     public function viewGlobalStatistics() {
         $statistics = [];
 
@@ -93,9 +93,8 @@ class Admin extends User {
         return $statistics;
     }
 
-    public function create(){
+    public function create(){}
 
-    }
     public function getUsers() {
         $stmt = $this->DB->prepare("SELECT userID, firstName, lastName, Email, role, status FROM users");
         $stmt->execute();
@@ -119,5 +118,6 @@ class Admin extends User {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     }
+
 }
 ?>

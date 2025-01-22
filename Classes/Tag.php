@@ -1,17 +1,17 @@
 <?php
+// require_once '../includes/db.php';
+// require 'includes/session.php';
 class Tag {
     private $tag_id;
     private $name;
     private $db;
 
-    // Constructor
-    public function __construct($tag_id, $name, $db) {
+    public function __construct($tag_id, $name) {
         $this->tag_id = $tag_id;
         $this->name = $name;
-        $this->db = $db;
+        $this->db = Database::getInstance();
     }
 
-    // Getters
     public function getTagId() {
         return $this->tag_id;
     }
@@ -20,52 +20,62 @@ class Tag {
         return $this->name;
     }
 
-    // Setters
     public function setName($name) {
         $this->name = $name;
     }
 
-    // Save the tag to the database
+    public static function getTagsByCourseId($course_id) {
+        $db = Database::getInstance();
+        $stmt = $db->prepare("SELECT t.* FROM tags t
+                              JOIN course_tags ct ON t.tag_id = ct.tag_id
+                              WHERE ct.course_id = :course_id");
+        $stmt->execute(['course_id' => $course_id]);
+        $tagsData = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $tags = [];
+        foreach ($tagsData as $tagData) {
+            $tag = new Tag($tagData['tag_id'],$tagData['name']);
+            $tags[] = $tag;
+        }
+
+        return $tags;
+    }
+    
     public function save() {
         if ($this->tag_id) {
-            // Update existing tag
             $stmt = $this->db->prepare("UPDATE tags SET name = :name WHERE tag_id = :tag_id");
             $stmt->execute([
                 'name' => $this->name,
                 'tag_id' => $this->tag_id
             ]);
         } else {
-            // Insert new tag
             $stmt = $this->db->prepare("INSERT INTO tags (name) VALUES (:name)");
             $stmt->execute(['name' => $this->name]);
             $this->tag_id = $this->db->lastInsertId();
         }
     }
 
-    // Delete the tag from the database
-    public function delete() {
-        $stmt = $this->db->prepare("DELETE FROM tags WHERE tag_id = :tag_id");
-        $stmt->execute(['tag_id' => $this->tag_id]);
+    public static function delete($tag_id) {
+        $stmt = Database::getInstance()->prepare("DELETE FROM tags WHERE tag_id = :tag_id");
+        $stmt->execute(['tag_id' => $tag_id]);
     }
 
-    // Static method to get a tag by ID
-    public static function getTagById($tag_id, $db) {
-        $stmt = $db->prepare("SELECT * FROM tags WHERE tag_id = :tag_id");
+    public static function getTagById($tag_id) {
+        $stmt = Database::getInstance()->prepare("SELECT * FROM tags WHERE tag_id = :tag_id");
         $stmt->execute(['tag_id' => $tag_id]);
         $tag = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($tag) {
-            return new Tag($tag['tag_id'], $tag['name'], $db);
+            return new Tag($tag['tag_id'], $tag['name']);
         }
         return null;
     }
 
-    // Static method to get all tags
-    public static function getAllTags($db) {
-        $stmt = $db->prepare("SELECT * FROM tags");
+    public static function getAllTags() {
+        $stmt = database::getInstance()->prepare("SELECT * FROM tags");
         $stmt->execute();
         $tags = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $tags[] = new Tag($row['tag_id'], $row['name'], $db);
+            $tags[] = new Tag($row['tag_id'], $row['name']);
         }
         return $tags;
     }

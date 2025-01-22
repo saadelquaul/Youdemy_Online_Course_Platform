@@ -1,4 +1,7 @@
-<?php include 'includes/header.php' ?>
+<?php 
+// include 'includes/header.php';
+require '../includes/session.php';
+ ?>
     <!-- Header Start -->
     <div class="container-fluid page-header" style="margin-bottom: 90px;">
         <div class="container">

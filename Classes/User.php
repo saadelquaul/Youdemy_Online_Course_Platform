@@ -1,5 +1,6 @@
 <?php
-require 'includes/db.php';
+// require '../includes/session.php';
+
 abstract class User
 {
     protected $FirstName;

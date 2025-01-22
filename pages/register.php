@@ -1,7 +1,9 @@
 <?php
-require 'Classes/Student.php';
-require 'Classes/Teacher.php';
-require 'Classes/Admin.php';
+// require 'Classes/Student.php';
+// require 'Classes/Teacher.php';
+// require 'Classes/Admin.php';
+require '../includes/session.php';
+
 if(isset($_SESSION['user'])){
     header('location: index.php');
     exit;
@@ -67,9 +69,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['firstname'])) {
     <link href="lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
 
     <!-- Customized Bootstrap Stylesheet -->
-    <link href="css/style.css" rel="stylesheet">
-    <link href="css/login&signup.css" rel="stylesheet">
-    <link href="css/style.min.css" rel="stylesheet">
+    <link href="../css/style.css" rel="stylesheet">
+    <link href="../css/login&signup.css" rel="stylesheet">
+    <link href="../css/style.min.css" rel="stylesheet">
 </head>
 
 <body>
@@ -78,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['firstname'])) {
     <div class="container-fluid d-none d-lg-block">
         <div class="row align-items-center py-4 px-xl-5">
             <div class="col-lg-3">
-                <a href="index.php" class="text-decoration-none">
+                <a href="../index.php" class="text-decoration-none">
                     <h1 class="m-0"><span class="text-primary">You</span>Demy</h1>
                 </a>
             </div>

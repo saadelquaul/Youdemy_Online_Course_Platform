@@ -1,5 +1,6 @@
 <?php
-require 'includes/session.php';
+// require 'includes/session.php';
+require '../includes/session.php';
 
 if (!isset($_GET['userID'])) {
     http_response_code(400);

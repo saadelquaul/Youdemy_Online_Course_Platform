@@ -1,6 +1,5 @@
 <?php
-require 'includes/session.php';
-
+require '../includes/session.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['teacherID'])) {
     $teacherID = $_POST['teacherID'];

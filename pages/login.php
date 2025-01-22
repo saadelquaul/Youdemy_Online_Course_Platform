@@ -1,10 +1,10 @@
 <?php
-include 'includes/session.php';
-require 'Classes/Student.php';
-require 'Classes/Teacher.php';
-require 'Classes/Admin.php';
+// include 'includes/session.php';
+require '../includes/session.php';
+// require_once 'autoloader.php';
+
 if(isLoggedIn()){
-    header('location:index.php');
+    header('location:../index.php');
 }
 $error_message;
 
@@ -28,9 +28,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email'])) {
                     $error_message = 'Your account is not active yet.Please try again later!';
                 } else {
                     $teacher = new Teacher($user['firstName'], $user['lastName'], $user['Email'], $user['password'], $user['role'], $teacherInfo['description'], $teacherInfo['specialtyID']);
-                    $teacher->setTotal_courses($teacherInfo['total_courses']);
+                    $teacher->setTotalCourses($teacherInfo['total_courses']);
                     $teacher->setImage($teacherInfo['image']);
-                    $teacher->setStatu($teacherInfo['isActive']);
+                    $teacher->setStatus($teacherInfo['isActive']);
                     $_SESSION['user'] = serialize($teacher);
                     header('Location: teacher-dashboard.php');
                     exit;
@@ -76,8 +76,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email'])) {
     <link href="lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
 
     <!-- Customized Bootstrap Stylesheet -->
-    <link href="css/style.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/login&signup.css">
+    <link href="../css/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/login&signup.css">
 </head>
 
 <body>
@@ -86,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email'])) {
  <div class="container-fluid d-none d-lg-block">
         <div class="row align-items-center py-4 px-xl-5">
             <div class="col-lg-3">
-                <a href="index.php" class="text-decoration-none">
+                <a href="../index.php" class="text-decoration-none">
                     <h1 class="m-0"><span class="text-primary">You</span>Demy</h1>
                 </a>
             </div>
@@ -159,7 +159,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email'])) {
             </div>
         </div>
     </div>
-    <?php include 'includes/footer.php' ?>
+    <?php include '../includes/footer.php' ?>
     <script src="js/login&signup.js"></script>
 </body>
 </html>

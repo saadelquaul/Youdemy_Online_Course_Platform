@@ -106,18 +106,18 @@
                             <?php
                                 if(isLoggedIn()){
                                     switch($user->getRole()) {
-                                        case 'Admin' : echo '<a href="admin-dashboard.php" class="nav-item nav-link">Dashboard</a>' ;break;
-                                        case 'teacher' : echo '<a href="teacher-dashboard.php" class="nav-item nav-link">Dashboard</a>' ;break;
-                                        case 'student' : echo '<a href="teacher-dashboard.php" class="nav-item nav-link">Dashboard</a>' ;break;
+                                        case 'Admin' : echo '<a href="pages/admin-dashboard.php" class="nav-item nav-link">Dashboard</a>' ;break;
+                                        case 'teacher' : echo '<a href="pages/teacher-dashboard.php" class="nav-item nav-link">Dashboard</a>' ;break;
+                                        case 'student' : echo '<a href="pages/teacher-dashboard.php" class="nav-item nav-link">Dashboard</a>' ;break;
                                     }
                                 }
                             ?>
                         </div>
                         <?php if (!isLoggedIn()) {
-                            echo '<a class="btn btn-secondary py-2 ml-auto px-4 d-none d-lg-block" href="login.php">Login</a>' .
-                                '<a class="btn btn-primary py-2 px-4 ml-auto d-none d-lg-block" href="register.php">Join Now</a>';
+                            echo '<a class="btn btn-secondary py-2 ml-auto px-4 d-none d-lg-block" href="pages/login.php">Login</a>' .
+                                '<a class="btn btn-primary py-2 px-4 ml-auto d-none d-lg-block" href="pages/register.php">Join Now</a>';
                         } else {
-                            echo '<a class="btn btn-secondary py-2 px-4 ml-auto d-none d-lg-block" href="logout.php">Logout</a>';
+                            echo '<a class="btn btn-secondary py-2 px-4 ml-auto d-none d-lg-block" href="pages/logout.php">Logout</a>';
                         } ?>
 
                     </div>

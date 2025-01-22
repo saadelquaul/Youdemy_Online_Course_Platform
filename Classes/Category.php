@@ -1,17 +1,18 @@
 <?php
+// require_once ('../includes/db.php');
+// require 'includes/session.php';
+
 class Category {
     private $category_id;
     private $name;
-    private $db;
+    private $db ;
 
-    // Constructor
-    public function __construct($category_id, $name, $db) {
+    public function __construct($category_id, $name) {
         $this->category_id = $category_id;
         $this->name = $name;
-        $this->db = $db;
+        $this->db = Database::getInstance();
     }
 
-    // Getters
     public function getCategoryId() {
         return $this->category_id;
     }
@@ -20,54 +21,54 @@ class Category {
         return $this->name;
     }
 
-    // Setters
     public function setName($name) {
         $this->name = $name;
     }
 
-    // Save the category to the database
     public function save() {
         if ($this->category_id) {
-            // Update existing category
             $stmt = $this->db->prepare("UPDATE categories SET name = :name WHERE category_id = :category_id");
             $stmt->execute([
                 'name' => $this->name,
                 'category_id' => $this->category_id
             ]);
         } else {
-            // Insert new category
             $stmt = $this->db->prepare("INSERT INTO categories (name) VALUES (:name)");
             $stmt->execute(['name' => $this->name]);
             $this->category_id = $this->db->lastInsertId();
         }
     }
 
-    // Delete the category from the database
-    public function delete() {
-        $stmt = $this->db->prepare("DELETE FROM categories WHERE category_id = :category_id");
-        $stmt->execute(['category_id' => $this->category_id]);
+    public static function delete($category_id) {
+        $stmt = Database::getInstance()->prepare("DELETE FROM categories WHERE category_id = :category_id");
+        return $stmt->execute(['category_id' => $category_id]);
     }
 
-    // Static method to get a category by ID
-    public static function getCategoryById($category_id, $db) {
-        $stmt = $db->prepare("SELECT * FROM categories WHERE category_id = :category_id");
+    public static function getCategoryById($category_id) {
+        $stmt = database::getInstance()->prepare("SELECT * FROM categories WHERE category_id = :category_id");
         $stmt->execute(['category_id' => $category_id]);
         $category = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($category) {
-            return new Category($category['category_id'], $category['name'], $db);
+            return new Category($category['category_id'], $category['name']);
         }
         return null;
     }
 
-    // Static method to get all categories
-    public static function getAllCategories($db) {
-        $stmt = $db->prepare("SELECT * FROM categories");
+    public static function getAllCategories() {
+        $stmt = Database::getInstance()->prepare("SELECT * FROM categories");
         $stmt->execute();
         $categories = [];
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $categories[] = new Category($row['category_id'], $row['name'], $db);
+            $categories[] = new Category($row['category_id'], $row['name']);
         }
         return $categories;
     }
+
+    public function totalCourses() {
+        $stmt = $this->db->prepare("SELECT COUNT(*) AS total_courses FROM courses WHERE category_id = :category_id");
+        $stmt->execute(['category_id' => $this->category_id]);
+        return $stmt->fetchColumn();
+
+}
 }
 ?>

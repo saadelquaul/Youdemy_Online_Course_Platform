@@ -1,9 +1,8 @@
 <?php
-require 'includes/session.php';
-
+require '../includes/session.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['userID'])) {
-    $teacherID = $_POST['userID'];
+    $userID = $_POST['userID'];
 
     $db = Database::getInstance();
     $stmt = $db->prepare("DELETE FROM users WHERE userID = :userID");

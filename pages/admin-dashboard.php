@@ -1,5 +1,6 @@
 <?php
-require 'includes/session.php';
+require '../includes/session.php';
+
 
 if (isLoggedIn()) {
     $user = getUser();
@@ -9,6 +10,7 @@ if (!isset($user) || $user->getRole() !== 'Admin') {
     header('Location: login.php');
     exit();
 }
+
 
 $adminStats = $user->viewGlobalStatistics();
 
@@ -22,6 +24,10 @@ $offset = ($page - 1) * $usersPerPage;
 $users = $user->getUsersOffSet($offset, $usersPerPage);
 
 $pendingTeachers = $user->getPendingTeachers();
+
+$categories = Category::getAllCategories();
+$tags = Tag::getAllTags();
+$courses = Course::getAllCourses();
 ?>
 
 <!DOCTYPE html>
@@ -456,9 +462,7 @@ $pendingTeachers = $user->getPendingTeachers();
                                                         <i class="fas fa-eye"></i>
                                                     </button>
 
-                                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteUser(<?php echo $user['userID']; ?>)">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
+
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
@@ -534,63 +538,44 @@ $pendingTeachers = $user->getPendingTeachers();
         </div>
 
         <!-- Courses Grid -->
-        <div class="row">
+        <div class="row" id="courses">
             <?php foreach ($courses as $course): ?>
                 <div class="col-md-6 col-lg-4 mb-4">
                     <div class="card course-card h-100">
                         <div class="card-header bg-white">
-                            <span class="status-badge badge bg-<?php echo $course['status'] === 'active' ? 'success' : ($course['status'] === 'pending' ? 'warning' : 'danger'); ?>">
-                                <?php echo ucfirst($course['status']); ?>
-                            </span>
-                            <h5 class="card-title mb-0"><?php echo htmlspecialchars($course['title']); ?></h5>
+                            
+                            <h5 class="card-title mb-0"><?php echo htmlspecialchars($course->getTitle()); ?></h5>
                         </div>
                         <div class="card-body">
                             <div class="mb-3">
                                 <small class="text-muted">
-                                    <i class="fas fa-user me-2"></i><?php echo htmlspecialchars($course['teacher_name']); ?>
+                                    <i class="fas fa-user me-2"></i><?php echo htmlspecialchars($course->getTeacherNameById()); ?>
                                 </small>
                                 <br>
                                 <small class="text-muted">
-                                    <i class="fas fa-folder me-2"></i><?php echo htmlspecialchars($course['category_name']); ?>
+                                    <i class="fas fa-folder me-2"></i><?php echo htmlspecialchars(Category::getCategoryById($course->getCategoryID())->getName()); ?>
                                 </small>
                                 <br>
                                 <small class="text-muted">
-                                    <i class="fas fa-users me-2"></i><?php echo $course['enrollment_count']; ?> students
+                                    <i class="fas fa-users me-2"></i><?php echo $course->getTotalEnrollments(); ?> students
                                 </small>
                             </div>
 
-                            <p class="card-text"><?php echo substr(htmlspecialchars($course['description']), 0, 100); ?>...</p>
+                            <p class="card-text"><?php echo substr(htmlspecialchars($course->getDescription()), 0, 100); ?>...</p>
 
-                            <div class="d-flex justify-content-between align-items-center mt-3">
-                                <form method="POST" class="d-inline">
-                                    <input type="hidden" name="courseId" value="<?php echo $course['id']; ?>">
-                                    <select name="status" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
-                                        <option value="active" <?php echo $course['status'] === 'active' ? 'selected' : ''; ?>>Active</option>
-                                        <option value="pending" <?php echo $course['status'] === 'pending' ? 'selected' : ''; ?>>Pending</option>
-                                        <option value="suspended" <?php echo $course['status'] === 'suspended' ? 'selected' : ''; ?>>Suspended</option>
-                                    </select>
-                                    <input type="hidden" name="updateStatus" value="1">
-                                </form>
-
-                                <div class="btn-group">
-                                    <button class="btn btn-sm btn-outline-primary" onclick="viewCourse(<?php echo $course['id']; ?>)">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteCourse(<?php echo $course['id']; ?>)">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </div>
+                            
+                            </div> 
                         </div>
                     </div>
+                    <?php  endforeach;?>
                 </div>
-            <?php endforeach; ?>
-        </div>
-
+            
+        
+        
         <div class="container-fluid py-4">
             <div class="row">
                 <!-- Categories Section -->
-                <div class="col-md-6 mb-4">
+                <div class="col-md-6 mb-4" id="categories">
                     <div class="card">
                         <div class="card-header bg-white d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">Categories</h5>
@@ -611,21 +596,23 @@ $pendingTeachers = $user->getPendingTeachers();
                                     <tbody>
                                         <?php foreach ($categories as $category): ?>
                                             <tr>
-                                                <td><?php echo htmlspecialchars($category['name']); ?></td>
+                                                <td><?php echo htmlspecialchars($category->getName()); ?></td>
                                                 <td>
                                                     <?php
-                                                    $stmt = $pdo->prepare("SELECT COUNT(*) FROM courses WHERE category_id = ?");
-                                                    $stmt->execute([$category['id']]);
-                                                    echo $stmt->fetchColumn();
+                                                    echo $category->totalCourses();
                                                     ?>
                                                 </td>
                                                 <td>
-                                                    <button class="btn btn-sm btn-outline-primary" onclick="editCategory(<?php echo $category['id']; ?>)">
+                                                    <button class="btn btn-sm btn-outline-primary" onclick='editCategory("<?php echo $category->getCategoryId(); ?>","<?php echo $category->getName(); ?>")'>
                                                         <i class="fas fa-edit"></i>
                                                     </button>
-                                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteCategory(<?php echo $category['id']; ?>)">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
+
+                                                    <form action="delete_category.php" method="get" style="display:inline;">
+                                                        <input type="hidden" name="category_id" value="<?php echo $category->getCategoryId(); ?>">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                            <i class="fas fa-trash"></i> Delete
+                                                        </button>
+                                                    </form>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
@@ -638,7 +625,7 @@ $pendingTeachers = $user->getPendingTeachers();
 
                 <!-- Tags Section -->
                 <div class="col-md-6 mb-4">
-                    <div class="card">
+                    <div class="card" id="tags">
                         <div class="card-header bg-white d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">Tags</h5>
                             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTagsModal">
@@ -650,10 +637,13 @@ $pendingTeachers = $user->getPendingTeachers();
                                 <div class="d-flex flex-wrap gap-2">
                                     <?php foreach ($tags as $tag): ?>
                                         <span class="badge bg-primary p-2">
-                                            <?php echo htmlspecialchars($tag['name']); ?>
-                                            <button class="btn btn-sm text-white" onclick="deleteTag(<?php echo $tag['id']; ?>)">
-                                                <i class="fas fa-times"></i>
-                                            </button>
+                                            <?php echo htmlspecialchars($tag->getName()); ?>
+                                            <form action="delete_tag.php" method="post" style="display:inline;">
+                                                <input type="hidden" name="tag_id" value="<?php echo $tag->getTagId(); ?>">
+                                                <button type="submit" class="btn btn-sm text-white">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </form>
                                         </span>
                                     <?php endforeach; ?>
                                 </div>
@@ -664,10 +654,30 @@ $pendingTeachers = $user->getPendingTeachers();
             </div>
         </div>
 
+        <div class="modal fade" id="editCategoryModal" tabindex="-1" aria-labelledby="editCategoryModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editCategoryModalLabel">Edit Category</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form action="edit_category.php" method="POST">
+                            <input type="hidden" id="editCategoryId" name="category_id">
+                            <div class="mb-3">
+                                <label for="editCategoryName" class="form-label">Category Name</label>
+                                <input type="text" class="form-control" id="editCategoryName" name="name" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="modal fade" id="addCategoryModal" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
-                    <form method="POST">
+                    <form method="POST" action="add_category.php">
                         <div class="modal-header">
                             <h5 class="modal-title">Add Category</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -676,10 +686,6 @@ $pendingTeachers = $user->getPendingTeachers();
                             <div class="mb-3">
                                 <label class="form-label">Category Name</label>
                                 <input type="text" class="form-control" name="name" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Description</label>
-                                <textarea class="form-control" name="description" rows="3"></textarea>
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -695,28 +701,27 @@ $pendingTeachers = $user->getPendingTeachers();
         <div class="modal fade" id="addTagsModal" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
-                    <form method="POST">
+                    <form action="add_tag.php" method="POST">
                         <div class="modal-header">
                             <h5 class="modal-title">Add Tags</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body">
-                            <div class="mb-3">
-                                <label class="form-label">Tags (comma-separated)</label>
-                                <textarea class="form-control" name="tags" rows="3" placeholder="tag1, tag2, tag3"></textarea>
-                                <small class="text-muted">Enter multiple tags separated by commas</small>
-                            </div>
-                        </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tag</label>
+                        <input type="text" class="form-control" name="tag" placeholder="Enter tag" required>
+                    </div>
+                </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Add Tags</button>
-                            <input type="hidden" name="action" value="addTags">
+                            <button type="submit" class="btn btn-primary">Add Tag</button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
+                        
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function viewUser(userID) {
@@ -752,6 +757,13 @@ $pendingTeachers = $user->getPendingTeachers();
                 .catch(error => {
                     console.error('Error fetching user details:', error);
                 });
+        }
+
+        function editCategory(categoryId, categoryName) {
+            document.getElementById('editCategoryId').value = categoryId;
+            document.getElementById('editCategoryName').value = categoryName;
+            const editCategoryModal = new bootstrap.Modal(document.getElementById('editCategoryModal'));
+            editCategoryModal.show();
         }
     </script>
 </body>
